@@ -50,12 +50,23 @@ int main(int argc, char **argv) {
     
   ////// EXERCICIO: CRIAR FUNÇÃO PARA SUBSTITUIR ESSE CODIGO USANDO STRUCT /////
   wb_robot_init();
-  WbDeviceTag left_motor = wb_robot_get_device("left wheel motor");
-  WbDeviceTag right_motor = wb_robot_get_device("right wheel motor");
-  wb_motor_set_position(left_motor, INFINITY);
-  wb_motor_set_position(right_motor, INFINITY);
-  wb_motor_set_velocity(left_motor, 0.1 * MAX_SPEED);
-  wb_motor_set_velocity(right_motor, 0.1 * MAX_SPEED);
+  struct tMotor{
+  WbDeviceTag left;
+  WbDeviceTag right;
+  };
+  struct tRobot{
+  WbNodeRef node;
+  WbFieldRef position;
+  WbFieldRef rotation;
+  };
+  struct tMotor motor;
+  struct tRobot robot;
+  motor.left = wb_robot_get_device("left wheel motor");
+  motor.right = wb_robot_get_device("right wheel motor");
+  wb_motor_set_position(motor.left, INFINITY);
+  wb_motor_set_position(motor.right, INFINITY);
+  wb_motor_set_velocity(motor.left, 0.1 * MAX_SPEED);
+  wb_motor_set_velocity(motor.right, 0.1 * MAX_SPEED);
   WbDeviceTag ps[8];
   char ps_id[4];
   for(int i = 0; i < 8; i++){
@@ -63,18 +74,18 @@ int main(int argc, char **argv) {
     ps[i] = wb_robot_get_device(ps_id);
     wb_distance_sensor_enable(ps[i], TIME_STEP);
   }
-  WbNodeRef robot_node = wb_supervisor_node_get_from_def("EPUCK");
-  if (robot_node == NULL) {
+  robot.node = wb_supervisor_node_get_from_def("EPUCK");
+  if (robot.node == NULL) {
     fprintf(stderr, "No DEF EPUCK node found in the current world file\n");
     exit(1);
   }
-  WbFieldRef robot_position = wb_supervisor_node_get_field(robot_node, "translation");
-  WbFieldRef robot_rotation = wb_supervisor_node_get_field(robot_node, "rotation");
+  robot.position = wb_supervisor_node_get_field(robot.node, "translation");
+  robot.rotation = wb_supervisor_node_get_field(robot.node, "rotation");
   ////// EXERCICIO: CRIAR FUNÇÃO PARA SUBSTITUIR ESSE CODIGO USANDO STRUCT /////
 
   while (wb_robot_step(TIME_STEP) != -1) {
-    const double *position = wb_supervisor_field_get_sf_vec3f(robot_position);
-    const double *rotation = wb_supervisor_field_get_sf_rotation(robot_rotation);
+    const double *position = wb_supervisor_field_get_sf_vec3f(robot.position);
+    const double *rotation = wb_supervisor_field_get_sf_rotation(robot.rotation);
        
     float dist[8];
     for(int i = 0; i < 8; i++) {
@@ -85,13 +96,13 @@ int main(int argc, char **argv) {
 
     if ( detect_obstacle_ahead(dist) )
     {
-      wb_motor_set_velocity(left_motor, 0.2 * MAX_SPEED);
-      wb_motor_set_velocity(right_motor, -0.2 * MAX_SPEED);
+      wb_motor_set_velocity(motor.left, 0.2 * MAX_SPEED);
+      wb_motor_set_velocity(motor.right, -0.2 * MAX_SPEED);
     }
     if ( !detect_obstacle_ahead(dist) )
     {
-      wb_motor_set_velocity(left_motor, 0.5 * MAX_SPEED);
-      wb_motor_set_velocity(right_motor, 0.5 * MAX_SPEED);
+      wb_motor_set_velocity(motor.left, 0.5 * MAX_SPEED);
+      wb_motor_set_velocity(motor.right, 0.5 * MAX_SPEED);
     }
   }
    
